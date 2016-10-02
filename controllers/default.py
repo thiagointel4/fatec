@@ -11,6 +11,7 @@
 
 def index():
     titulo = "Projeto FATEC"
+    subtitulo = "Cursos da Fatec"
     return locals()
 
 
