@@ -10,8 +10,8 @@
 
 
 def index():
-    titulo = "Projeto FATEC"
-    teste="testado"
+
+    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True) & ((db.curso.vaga - db(db.ownership.curso == db.curso.id).count()) > 0)).select()
     return locals()
 
 
