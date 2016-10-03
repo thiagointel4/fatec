@@ -1,11 +1,6 @@
 {{extend 'layout.html'}}
-{{if auth.is_logged_in() and (auth.has_membership('administrador') or auth.has_membership('instrutor')):}}
-{{else:}}
 <div class="page-header text-center">
   <h1>Cursos Disponíveis</h1>
-</div>
-<div class="text-center" style="margin: 10px;">
-    <a class="btn btn-primary" {{='' if len(cursos) else 'disabled'}} href="{{=URL('default', 'cad_curso')}}">Participe</a>
 </div>
 <table class="table table-bordered table-striped">
     <thead>
@@ -17,6 +12,8 @@
         <th>Sala</th>
         <th>Vaga</th>
         <th>Descrição</th>
+        <th>Disponível</th>
+        <th>Participando</th>
     </tr>
     </thead>
     <tbody>
@@ -29,9 +26,17 @@
         <td>{{=curso.curso.sala}}</td>
         <td>{{=curso.curso.vaga - db(db.ownership.curso == curso.curso.id).count()}}</td>
         <td>{{=curso.curso.descricao}}</td>
+      <td>
+        {{if curso.curso.id not in lista_ig:}}
+        <a onclick="$(this).attr('disabled', true);" class="btn btn-info" href="{{=URL('default', 'participa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Participar</a>
+        {{pass}}
+      </td>
+      <td>
+        {{if curso.curso.id in cadastrados:}}
+        <a onclick="$(this).attr('disabled', true);" class="btn btn-danger" href="{{=URL('default', 'desparticipa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Sair</a>
+        {{pass}}
+      </td>
     </tr>
     {{pass}}
     </tbody>
 </table>
-
-{{pass}}

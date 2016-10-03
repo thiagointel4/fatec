@@ -29,7 +29,7 @@ response.google_analytics_id = None
 # ----------------------------------------------------------------------------------------------------------------------
 
 response.menu = [
-    (T('Home'), False, URL('default', 'index'), [])
+    ('Inicio', False, URL('default', 'index'), [])
 ]
 
 DEVELOPMENT_MENU = True
@@ -48,7 +48,13 @@ def _():
     # ------------------------------------------------------------------------------------------------------------------
     # useful links to internal and external resources
     # ------------------------------------------------------------------------------------------------------------------
-    response.menu += []
+    response.menu += [
+
+    ]
+    if auth.is_logged_in() and auth.has_membership('administrador'):
+        response.menu.append(('Usuários', False, URL('default', 'administrador'), []))
+    if auth.is_logged_in() and auth.has_membership('instrutor'):
+        response.menu.append(('Cursos', False, URL('default', 'curso'), []))
 
 
 if DEVELOPMENT_MENU:

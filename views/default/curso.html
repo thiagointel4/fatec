@@ -1,0 +1,5 @@
+{{extend 'layout.html'}}
+<div class="page-header text-center">
+  <h1>{{='Cadastrar Novo' if request.args(0) == 'new' else ''}} Cursos</h1>
+</div>
+{{=form}}

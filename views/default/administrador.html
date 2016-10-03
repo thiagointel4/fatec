@@ -1,0 +1,24 @@
+{{extend 'layout.html'}}
+<div class="page-header text-center">
+  <h1>Usuários</h1>
+</div>
+<table class="table table-borded table-striped">
+    <thead>
+    <tr>
+        <th>Nome</th>
+        <th>Tipo</th>
+        <th>Email</th>
+        <th>Editar</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{for u in usuarios:}}
+    <tr>
+        <td>{{='{0} {1}'.format(u.auth_user.first_name, u.auth_user.last_name)}}</td>
+        <td>{{=u.auth_group.role}}</td>
+        <td>{{=u.auth_user.email}}</td>
+        <td><a class="btn btn-info" href="{{=URL('default', 'edita_user', args=[u.auth_user.id])}}">Editar Tipo</a></td>
+    </tr>
+    {{pass}}
+    </tbody>
+</table>
