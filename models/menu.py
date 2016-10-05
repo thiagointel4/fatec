@@ -55,6 +55,8 @@ def _():
         response.menu.append(('Usuários', False, URL('default', 'administrador'), []))
     if auth.is_logged_in() and auth.has_membership('instrutor'):
         response.menu.append(('Cursos', False, URL('default', 'curso'), []))
+    if auth.is_logged_in() and auth.has_membership('aluno'):
+        response.menu.append(('Meus Cursos', False, URL('default', 'cad_curso'), []))
 
 
 if DEVELOPMENT_MENU:

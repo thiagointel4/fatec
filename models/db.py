@@ -252,7 +252,8 @@ Cursos = db.define_table('curso',
 
 db.define_table('ownership',
                 Field('curso', 'reference curso'),
-                Field('users', 'reference auth_user'))
+                Field('users', 'reference auth_user'),
+                Field('status', 'integer', label='Status'))
 
 db.define_table('chamada',
                 Field('curso', 'reference ownership', label='Curso'),

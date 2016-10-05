@@ -1,6 +1,6 @@
 {{extend 'layout.html'}}
 <div class="page-header text-center">
-  <h1>Cursos Disponíveis</h1>
+  <h1>Cursos</h1>
 </div>
 <table class="table table-bordered table-striped">
     <thead>
@@ -12,8 +12,7 @@
         <th>Sala</th>
         <th>Vaga</th>
         <th>Descrição</th>
-        <th>Disponível</th>
-        <th>Participando</th>
+        <th>Status</th>
     </tr>
     </thead>
     <tbody>
@@ -24,16 +23,15 @@
         <td>{{=curso.curso.data_ini.strftime('%d/%m/%y %H:%M')}}</td>
         <td>{{=curso.curso.data_fim.strftime('%d/%m/%y %H:%M')}}</td>
         <td>{{=curso.curso.sala}}</td>
-        <td>{{=curso.curso.vaga - db(db.ownership.curso == curso.curso.id).count()}}</td>
+        <td>{{=curso.curso.vaga}}</td>
         <td>{{=curso.curso.descricao}}</td>
       <td>
         {{if curso.curso.id not in lista_ig:}}
-        <a onclick="$(this).attr('disabled', true);" class="btn btn-info" href="{{=URL('default', 'participa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Participar</a>
-        {{pass}}
-      </td>
-      <td>
-        {{if curso.curso.id in cadastrados:}}
-        <a onclick="$(this).attr('disabled', true);" class="btn btn-danger" href="{{=URL('default', 'desparticipa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Sair</a>
+        <a onclick="$(this).attr('disabled', true);" {{='disabled' if curso.curso.vaga < 1 else ''}} class="btn btn-info" href="{{=URL('default', 'participa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Participar</a>
+        {{elif db((db.ownership.curso == curso.curso.id) & (db.ownership.users == auth.user_id)).select().first().status == 1:}}
+          Aguardando aprovação
+        {{elif db((db.ownership.curso == curso.curso.id) & (db.ownership.users == auth.user_id)).select().first().status == 2:}}
+          Cursando
         {{pass}}
       </td>
     </tr>

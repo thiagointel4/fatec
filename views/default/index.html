@@ -27,7 +27,7 @@
         <td>{{=curso.curso.data_ini.strftime('%d/%m/%y %H:%M')}}</td>
         <td>{{=curso.curso.data_fim.strftime('%d/%m/%y %H:%M')}}</td>
         <td>{{=curso.curso.sala}}</td>
-        <td>{{=curso.curso.vaga - db(db.ownership.curso == curso.curso.id).count()}}</td>
+        <td>{{=curso.curso.vaga}}</td>
         <td>{{=curso.curso.descricao}}</td>
     </tr>
     {{pass}}
