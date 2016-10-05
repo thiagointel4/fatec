@@ -135,6 +135,16 @@ def chamada():
 
 @auth.requires_login()
 @auth.requires(auth.has_membership('instrutor'))
+def chamada_realizada():
+    cursos = db((db.curso.instrutor == auth.user_id) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id)).select(orderby=db.curso.titulo)
+    if session.alerta:
+        response.flash = session.alerta
+        session.alerta = ''
+    return locals()
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
 def salva():
     num = request.args(0) or redirect(URL('chamada'))
     curso = request.args(1)
@@ -150,6 +160,25 @@ def salva():
     else:
         session.alerta = 'Não há aluno para realizar a chamada'
     return URL('default', 'chamada')
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def salva_correcao():
+    num = request.args(0) or redirect(URL('chamada_realizada'))
+    ownership_id = request.args(1)
+    if int(num) > 0:
+        alunos = request.vars.alunos.split(',')
+        chamadas = db((db.chamada.curso == ownership_id) & (db.ownership.id == db.chamada.curso)).select()
+        for o in chamadas:
+            if str(o.ownership.users) in alunos:
+                db(db.chamada.id == o.chamada.id).update(chamada=True)
+            else:
+                db(db.chamada.id == o.chamada.id).update(chamada=False)
+        session.alerta = 'Chamada Atualizada'
+    else:
+        session.alerta = 'Não há aluno para realizar a chamada'
+    return URL('default', 'chamada_realizada')
 
 
 @auth.requires_login()
@@ -182,5 +211,36 @@ def get_aluno():
             resp = head.format(body)
         else:
             resp = '<h2>Chamada já realizada</h2>'
+
+    return resp
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def get_aluno_correcao():
+    head = '''<table class="table table-striped table-borded aluno_chamada">
+                <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>presença</th>
+                </tr>
+                </thead>
+                <tbody>{0}</tbody>
+              </table>
+              <div class="text-center" style="width:100%;">
+                <button onclick="$(this).attr('disabled',true);salva_aluno();" class="btn btn-success">Salvar</button>
+              </div>
+    '''
+    body = ''
+    resp = ''
+    cursos = db((db.curso.instrutor == auth.user_id) & (db.chamada.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id) & (db.ownership.users == db.auth_user.id)).select()
+    for c in cursos:
+        body += '''<tr>
+                        <td>{0} {1}</td>
+                        <td><input type="checkbox" {3} value="{2}" style="width:20px;height:20px;" /></td>
+                    </tr>
+        '''.format(c.auth_user.first_name, c.auth_user.last_name, c.auth_user.id, 'checked' if c.chamada.chamada else '')
+    if cursos:
+        resp = head.format(body)
 
     return resp

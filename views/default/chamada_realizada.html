@@ -1,0 +1,54 @@
+{{extend 'layout.html'}}
+<div class="page-header text-center">
+    {{if cursos:}}
+    <h1>Chamada de alunos</h1>
+    {{else:}}
+    <h1>Não foi realizada nenhhuma chamada</h1>
+    {{pass}}
+</div>
+{{if cursos:}}
+<div class="text-center" style="margin: 10px;">
+    <select class="form-control" id="curso" style="max-width: 250px;margin: auto;">
+        <option value="0">Selecione o curso</option>
+    {{for c in cursos:}}
+        <option value="{{=c.ownership.id}}">{{='{0} - {1}'.format(c.curso.titulo, c.chamada.dia_chamada.strftime('%d/%m/%Y'))}}</option>
+    {{pass}}
+    </select>
+</div>
+<div id="presenca"></div>
+<script>
+    $(document).ready(function () {
+        $("#curso").change(function () {
+            $.ajax({
+                url: '{{=URL('default', 'get_aluno_correcao')}}/' + $(this).val(),
+                data: {},
+                success: function (dado) {
+                    $("#presenca").html(dado);
+                },
+                error: function (erro) {
+                    alert(erro);
+                }
+            })
+        })
+    });
+    function salva_aluno(){
+        var chamadas = [];
+        $.each($(".aluno_chamada input[type=checkbox]:checked"), function(k,v){
+            chamadas.push($(v).val());
+        });
+        chamadas = chamadas.join(',');
+        var num = $(".aluno_chamada input[type=checkbox]").length;
+        var curso = $("#curso").val();
+        $.ajax({
+            url: '{{=URL('default', 'salva_correcao')}}/' + num + '/' + curso + '?alunos=' + chamadas,
+            data: {},
+            success: function(dado){
+                location.href = dado;
+            },
+            error: function(erro){
+                alert(erro);
+            }
+        })
+    }
+</script>
+{{pass}}
