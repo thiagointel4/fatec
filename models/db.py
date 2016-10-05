@@ -258,7 +258,8 @@ db.define_table('ownership',
 db.define_table('chamada',
                 Field('curso', 'reference ownership', label='Curso'),
                 Field('chamada', 'boolean', default=False, notnull=True, label='Chamada'),
-                Field('data_chamada', 'datetime', notnull=True, default=datetime.now(), label='Data')
+                Field('data_chamada', 'datetime', notnull=True, default=datetime.now(), label='Data'),
+                Field('dia_chamada', 'date', notnull=True, default=datetime.now().date(), label='Data')
                 )
 # incriçao ou seja o selecionaro o curso e houver vagas o user vai marcar o curso#curso é muitosa
 # para muito

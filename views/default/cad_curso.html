@@ -28,10 +28,12 @@
       <td>
         {{if curso.curso.id not in lista_ig:}}
         <a onclick="$(this).attr('disabled', true);" {{='disabled' if curso.curso.vaga < 1 else ''}} class="btn btn-info" href="{{=URL('default', 'participa', args=[curso.curso.id, auth.user_id, curso.curso.vaga])}}">Participar</a>
+        {{elif db((db.ownership.curso == curso.curso.id) & (db.ownership.users == auth.user_id)).select().first() is None:}}
+
         {{elif db((db.ownership.curso == curso.curso.id) & (db.ownership.users == auth.user_id)).select().first().status == 1:}}
           Aguardando aprovação
         {{elif db((db.ownership.curso == curso.curso.id) & (db.ownership.users == auth.user_id)).select().first().status == 2:}}
-          Cursando
+          Inscrito
         {{pass}}
       </td>
     </tr>

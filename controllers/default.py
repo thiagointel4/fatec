@@ -7,12 +7,12 @@
 # - user is required for authentication and authorization
 # - download is for downloading files uploaded in the db (does streaming)
 # -------------------------------------------------------------------------
-from datetime import datetime
+from datetime import datetime, timedelta
+
 
 def index():
     cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True) & (db.curso.data_ini > datetime.now())).select()
     return locals()
-
 
 def user():
     return dict(form=auth())
@@ -120,3 +120,67 @@ def desparticipa():
         db(db.ownership.id == request.args(0)).delete()
         db(db.curso.id == curso.curso.id).update(vaga=curso.curso.vaga + 1)
     redirect(URL('default', 'aluno'))
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def chamada():
+    cursos = db((db.curso.instrutor == auth.user_id) & (db.curso.ativo == True) & (db.curso.data_ini <= datetime.now().replace(hour=23,minute=59)) & (db.curso.data_fim >= datetime.now().replace(hour=23,minute=59))).select()
+    dia = datetime.now().strftime('%d/%m/%Y')
+    if session.alerta:
+        response.flash = session.alerta
+        session.alerta = ''
+    return locals()
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def salva():
+    num = request.args(0) or redirect(URL('chamada'))
+    curso = request.args(1)
+    if int(num) > 0:
+        alunos = request.vars.alunos.split(',')
+        ownerships = db((db.ownership.curso == curso) & (db.ownership.status == 2)).select()
+        for o in ownerships:
+            if str(o.users) in alunos:
+                db.chamada.insert(curso=o.id, chamada=True)
+            else:
+                db.chamada.insert(curso=o.id, chamada=False)
+        session.alerta = 'Chamada Salva'
+    else:
+        session.alerta = 'Não há aluno para realizar a chamada'
+    return URL('default', 'chamada')
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def get_aluno():
+    head = '''<table class="table table-striped table-borded aluno_chamada">
+                <thead>
+                <tr>
+                    <th>Aluno</th>
+                    <th>presença</th>
+                </tr>
+                </thead>
+                <tbody>{0}</tbody>
+              </table>
+              <div class="text-center" style="width:100%;">
+                <button onclick="$(this).attr('disabled',true);salva_aluno();" class="btn btn-success">Salvar</button>
+              </div>
+    '''
+    body = ''
+    resp = ''
+    cursos = db((db.curso.instrutor == auth.user_id) & (db.curso.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.ownership.status == 2) & (db.ownership.users == db.auth_user.id)).select()
+    for c in cursos:
+        body += '''<tr>
+                        <td>{0} {1}</td>
+                        <td><input type="checkbox" value="{2}" style="width:20px;height:20px;" /></td>
+                    </tr>
+        '''.format(c.auth_user.first_name, c.auth_user.last_name, c.auth_user.id)
+    if cursos:
+        if db((db.ownership.curso == request.args(0)) & (db.chamada.curso == db.ownership.id)).isempty():
+            resp = head.format(body)
+        else:
+            resp = '<h2>Chamada já realizada</h2>'
+
+    return resp
