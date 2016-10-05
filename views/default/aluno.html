@@ -5,8 +5,11 @@
 <table class="table table-bordered table-striped">
     <thead>
     <tr>
-        <th>Aluno</th>
+        {{if auth.has_membership('administrador'):}}
+        <th>Instrutor</th>
+        {{pass}}
         <th>Curso</th>
+        <th>Aluno</th>
         <th>Status</th>
         <th>Confirma</th>
         <th>Remove</th>
@@ -15,19 +18,22 @@
     <tbody>
     {{for aluno in alunos:}}
     <tr>
-        <td>{{='{0} {1}'.format(aluno.auth_user.first_name, aluno.auth_user.last_name)}}</td>
+        {{if auth.has_membership('administrador'):}}
+        <td>{{=instrutores[str(aluno.curso.instrutor)]}}</td>
+        {{pass}}
         <td>{{=aluno.curso.titulo}}</td>
+        <td>{{='{0} {1}'.format(aluno.auth_user.first_name, aluno.auth_user.last_name)}}</td>
         <td>{{='Aguardando Aprovação' if aluno.ownership.status == 1 else 'Cursando'}}</td>
         <td>
             {{if aluno.curso.vaga <= 0:}}
             Sem vagas
             {{elif aluno.ownership.status == 1:}}
-            <a onclick="$(this).attr('disabled', true);" class="btn btn-success" href="{{=URL('default', 'confirma', args=[aluno.ownership.id])}}">Confirmar</a>
+            <a onclick="$(this).attr('disabled', true);" class="btn btn-success" href="{{=URL('default', 'confirma', args=[aluno.ownership.id, aluno.curso.instrutor])}}">Confirmar</a>
             {{pass}}
         </td>
         <td>
             {{if aluno.ownership.status == 1:}}
-            <a onclick="$(this).attr('disabled', true);" class="btn btn-danger" href="{{=URL('default', 'desparticipa', args=[aluno.ownership.id])}}">Remover</a>
+            <a onclick="$(this).attr('disabled', true);" class="btn btn-danger" href="{{=URL('default', 'desparticipa', args=[aluno.ownership.id, aluno.curso.instrutor])}}">Remover</a>
             {{pass}}
         </td>
     </tr>

@@ -1,9 +1,29 @@
 {{extend 'layout.html'}}
+{{if auth.has_membership('administrador') and 'inst_sel' not in globals():}}
+<div class="text-center" style="margin: 10px;">
+    <select class="form-control" id="curso_instrutor" style="max-width: 250px;margin: auto;">
+        <option value="0">Selecione o instrutor</option>
+    {{for c in instrutores:}}
+        <option value="{{=c.id}}">{{='{0} {1}'.format(c.first_name, c.last_name)}}</option>
+    {{pass}}
+    </select>
+</div>
+<script>
+    $(document).ready(function () {
+        $("#curso_instrutor").change(function () {
+            location.href = '{{=URL('default', 'chamada')}}?instrutor=' + $(this).val();
+        })
+    });
+</script>
+{{else:}}
 <div class="page-header text-center">
-    {{if cursos:}}
+    {{if cursos :}}
     <h1>Chamada do dia {{=dia}}</h1>
     {{else:}}
     <h1>Não há chamada para hoje</h1>
+    {{pass}}
+    {{if auth.has_membership('administrador') and 'inst_sel' in globals():}}
+    <h1>Instrutor: {{=inst_sel}}</h1>
     {{pass}}
 </div>
 {{if cursos:}}
@@ -20,7 +40,7 @@
     $(document).ready(function () {
         $("#curso").change(function () {
             $.ajax({
-                url: '{{=URL('default', 'get_aluno')}}/' + $(this).val(),
+                url: '{{=URL('default', 'get_aluno')}}/' + $(this).val() + '{{='?instrutor={0}'.format(request.vars.instrutor) if request.vars.instrutor else ''}}',
                 data: {},
                 success: function (dado) {
                     $("#presenca").html(dado);
@@ -51,4 +71,5 @@
         })
     }
 </script>
+{{pass}}
 {{pass}}

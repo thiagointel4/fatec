@@ -95,17 +95,24 @@ def participa():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def aluno():
-    alunos = db((db.auth_user.id == db.ownership.users) & (db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id)).select()
+    if auth.has_membership('administrador'):
+        alunos = db((db.auth_user.id == db.ownership.users) & (db.ownership.curso == db.curso.id)).select(orderby=db.curso.titulo)
+        insts = db((db.auth_membership.group_id == auth.id_group('instrutor')) & (db.auth_membership.user_id == db.auth_user.id) & (db.auth_user.id == db.curso.instrutor)).select()
+        instrutores = dict()
+        for i in insts:
+            instrutores[str(i.auth_user.id)] = '{0} {1}'.format(i.auth_user.first_name, i.auth_user.last_name)
+    else:
+        alunos = db((db.auth_user.id == db.ownership.users) & (db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id)).select(orderby=db.curso.titulo)
 
     return locals()
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def confirma():
-    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
+    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == request.args(1)) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
     if curso:
         db(db.ownership.id == request.args(0)).update(status=2)
         db(db.curso.id == curso.curso.id).update(vaga=curso.curso.vaga - 1)
@@ -113,9 +120,9 @@ def confirma():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('aluno'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def desparticipa():
-    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
+    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == request.args(1)) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
     if curso:
         db(db.ownership.id == request.args(0)).delete()
         db(db.curso.id == curso.curso.id).update(vaga=curso.curso.vaga + 1)
@@ -123,9 +130,14 @@ def desparticipa():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def chamada():
-    cursos = db((db.curso.instrutor == auth.user_id) & (db.curso.ativo == True) & (db.curso.data_ini <= datetime.now().replace(hour=23,minute=59)) & (db.curso.data_fim >= datetime.now().replace(hour=23,minute=59))).select()
+    instrutores = db((db.auth_user.id == db.auth_membership.user_id) & (db.auth_membership.group_id == auth.id_group('instrutor'))).select(db.auth_user.ALL)
+    id_instrutor = auth.user_id
+    if request.vars.instrutor and auth.has_membership('administrador'):
+        id_instrutor = request.vars.instrutor
+        inst_sel = '%(first_name)s %(last_name)s' % db(db.auth_user.id == id_instrutor).select().first()
+    cursos = db((db.curso.instrutor == id_instrutor) & (db.curso.ativo == True) & (db.curso.data_ini <= datetime.now().replace(hour=23,minute=59)) & (db.curso.data_fim >= datetime.now().replace(hour=23,minute=59))).select()
     dia = datetime.now().strftime('%d/%m/%Y')
     if session.alerta:
         response.flash = session.alerta
@@ -134,9 +146,14 @@ def chamada():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def chamada_realizada():
-    cursos = db((db.curso.instrutor == auth.user_id) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id)).select(orderby=db.curso.titulo)
+    instrutores = db((db.auth_user.id == db.auth_membership.user_id) & (db.auth_membership.group_id == auth.id_group('instrutor'))).select(db.auth_user.ALL)
+    id_instrutor = auth.user_id
+    if request.vars.instrutor and auth.has_membership('administrador'):
+        id_instrutor = request.vars.instrutor
+        inst_sel = '%(first_name)s %(last_name)s' % db(db.auth_user.id == id_instrutor).select().first()
+    cursos = db((db.curso.instrutor == id_instrutor) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id)).select(orderby=db.curso.titulo)
     if session.alerta:
         response.flash = session.alerta
         session.alerta = ''
@@ -144,7 +161,7 @@ def chamada_realizada():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def salva():
     num = request.args(0) or redirect(URL('chamada'))
     curso = request.args(1)
@@ -163,7 +180,7 @@ def salva():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def salva_correcao():
     num = request.args(0) or redirect(URL('chamada_realizada'))
     ownership_id = request.args(1)
@@ -182,7 +199,7 @@ def salva_correcao():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def get_aluno():
     head = '''<table class="table table-striped table-borded aluno_chamada">
                 <thead>
@@ -199,7 +216,11 @@ def get_aluno():
     '''
     body = ''
     resp = ''
-    cursos = db((db.curso.instrutor == auth.user_id) & (db.curso.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.ownership.status == 2) & (db.ownership.users == db.auth_user.id)).select()
+    id_instrutor = auth.user_id
+    if request.vars.instrutor and auth.has_membership('administrador'):
+        id_instrutor = request.vars.instrutor
+        inst_sel = '%(first_name)s %(last_name)s' % db(db.auth_user.id == id_instrutor).select().first()
+    cursos = db((db.curso.instrutor == id_instrutor) & (db.curso.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.ownership.status == 2) & (db.ownership.users == db.auth_user.id)).select()
     for c in cursos:
         body += '''<tr>
                         <td>{0} {1}</td>
@@ -216,7 +237,7 @@ def get_aluno():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('instrutor') or auth.has_membership('administrador'))
 def get_aluno_correcao():
     head = '''<table class="table table-striped table-borded aluno_chamada">
                 <thead>
@@ -233,7 +254,11 @@ def get_aluno_correcao():
     '''
     body = ''
     resp = ''
-    cursos = db((db.curso.instrutor == auth.user_id) & (db.chamada.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id) & (db.ownership.users == db.auth_user.id)).select()
+    id_instrutor = auth.user_id
+    if request.vars.instrutor and auth.has_membership('administrador'):
+        id_instrutor = request.vars.instrutor
+        inst_sel = '%(first_name)s %(last_name)s' % db(db.auth_user.id == id_instrutor).select().first()
+    cursos = db((db.curso.instrutor == id_instrutor) & (db.chamada.id == request.args(0)) & (db.ownership.curso == db.curso.id) & (db.chamada.curso == db.ownership.id) & (db.ownership.users == db.auth_user.id)).select()
     for c in cursos:
         body += '''<tr>
                         <td>{0} {1}</td>
