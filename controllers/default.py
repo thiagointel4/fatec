@@ -7,10 +7,10 @@
 # - user is required for authentication and authorization
 # - download is for downloading files uploaded in the db (does streaming)
 # -------------------------------------------------------------------------
-
+from datetime import datetime
 
 def index():
-    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True)).select()
+    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True) & (db.curso.data_ini > datetime.now())).select()
     return locals()
 
 
@@ -65,7 +65,7 @@ def curso():
 @auth.requires_login()
 @auth.requires(auth.has_membership('aluno'))
 def cad_curso():
-    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True)).select()
+    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True) & (db.curso.data_ini > datetime.now())).select()
     curso_cad = db((db.ownership.users == auth.user_id) & (db.ownership.curso == db.curso.id)).select(db.curso.ALL)
     lista_ig = []
     cadastrados = []
@@ -95,7 +95,28 @@ def participa():
 
 
 @auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def aluno():
+    alunos = db((db.auth_user.id == db.ownership.users) & (db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id)).select()
+
+    return locals()
+
+
+@auth.requires_login()
+@auth.requires(auth.has_membership('instrutor'))
+def confirma():
+    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
+    if curso:
+        db(db.ownership.id == request.args(0)).update(status=2)
+        db(db.curso.id == curso.curso.id).update(vaga=curso.curso.vaga - 1)
+    redirect(URL('default', 'aluno'))
+
+
+@auth.requires_login()
 @auth.requires(auth.has_membership('aluno'))
 def desparticipa():
-    db((db.ownership.users == request.args(1)) & (db.ownership.curso == request.args(0))).delete()
-    redirect(URL('default', 'cad_curso'))
+    curso = db((db.ownership.curso == db.curso.id) & (db.curso.instrutor == auth.user_id) & (db.ownership.id == request.args(0))).select().first() or redirect(URL('aluno'))
+    if curso:
+        db(db.ownership.id == request.args(0)).delete()
+        db(db.curso.id == curso.curso.id).update(vaga=curso.curso.vaga + 1)
+    redirect(URL('default', 'aluno'))

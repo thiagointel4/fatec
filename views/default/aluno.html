@@ -1,0 +1,36 @@
+{{extend 'layout.html'}}
+<div class="page-header text-center">
+  <h1>{{='Alunos Inscritos' if request.args(0) == 'new' else ''}} Cursos</h1>
+</div>
+<table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+        <th>Aluno</th>
+        <th>Curso</th>
+        <th>Status</th>
+        <th>Confirma</th>
+        <th>Remove</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{for aluno in alunos:}}
+    <tr>
+        <td>{{='{0} {1}'.format(aluno.auth_user.first_name, aluno.auth_user.last_name)}}</td>
+        <td>{{=aluno.curso.titulo}}</td>
+        <td>{{='Aguardando Aprovação' if aluno.ownership.status == 1 else 'Cursando'}}</td>
+        <td>
+            {{if aluno.curso.vaga <= 0:}}
+            Sem vagas
+            {{elif aluno.ownership.status == 1:}}
+            <a onclick="$(this).attr('disabled', true);" class="btn btn-success" href="{{=URL('default', 'confirma', args=[aluno.ownership.id])}}">Confirmar</a>
+            {{pass}}
+        </td>
+        <td>
+            {{if aluno.ownership.status == 1:}}
+            <a onclick="$(this).attr('disabled', true);" class="btn btn-danger" href="{{=URL('default', 'desparticipa', args=[aluno.ownership.id])}}">Remover</a>
+            {{pass}}
+        </td>
+    </tr>
+    {{pass}}
+    </tbody>
+</table>
