@@ -53,12 +53,11 @@ def _():
     ]
     if auth.is_logged_in() and auth.has_membership('administrador'):
         response.menu.append(('Usuários', False, URL('default', 'administrador'), []))
-        response.menu.append(('Alunos', False, URL('default', 'aluno'), []))
+        response.menu.append(('Cursos', False, URL('default', 'curso'), []))
+        response.menu.append(('Confirmação', False, URL('default', 'aluno'), []))
         response.menu.append(('Chamada', False, URL('default', 'chamada'), []))
         response.menu.append(('Chamada Realizada', False, URL('default', 'chamada_realizada'), []))
     if auth.is_logged_in() and auth.has_membership('instrutor'):
-        response.menu.append(('Cursos', False, URL('default', 'curso'), []))
-        response.menu.append(('Alunos', False, URL('default', 'aluno'), []))
         response.menu.append(('Chamada', False, URL('default', 'chamada'), []))
         response.menu.append(('Chamada Realizada', False, URL('default', 'chamada_realizada'), []))
     if auth.is_logged_in() and auth.has_membership('aluno'):

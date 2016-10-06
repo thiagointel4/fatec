@@ -51,14 +51,14 @@ def edita_user():
 
 
 @auth.requires_login()
-@auth.requires(auth.has_membership('instrutor'))
+@auth.requires(auth.has_membership('administrador'))
 def curso():
-    db.curso.instrutor.default = auth.user_id
-    db.curso.instrutor.writable = False
-    db.curso.instrutor.readable = False
-    cursos = db((db.curso.instrutor == db.auth_user.id) & (db.curso.ativo == True))
-    form = SQLFORM.grid(cursos, searchable=False, details=False, csv=False,
-                        fields=[db.curso.titulo, db.curso.data_ini, db.curso.data_fim, db.curso.sala, db.curso.vaga, db.curso.ativo, db.curso.descricao])
+    db.curso.instrutor.requires = IS_IN_DB(db((db.auth_membership.user_id == db.auth_user.id) & (db.auth_membership.group_id == auth.id_group('instrutor'))), 'auth_user.id', '%(first_name)s %(last_name)s')
+    #db.curso.instrutor.writable = False
+    #db.curso.instrutor.readable = False
+    db.auth_user._format = '%(first_name)s %(last_name)s'
+    form = SQLFORM.grid(db.curso, searchable=False, details=False, csv=False,
+                        fields=[db.curso.instrutor, db.curso.titulo, db.curso.data_ini, db.curso.data_fim, db.curso.sala, db.curso.vaga, db.curso.ativo, db.curso.descricao])
     return locals()
 
 
@@ -232,6 +232,8 @@ def get_aluno():
             resp = head.format(body)
         else:
             resp = '<h2>Chamada já realizada</h2>'
+    else:
+        resp = '<h2>Não tem nenhum aluno</h2>'
 
     return resp
 
